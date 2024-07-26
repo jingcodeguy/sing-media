@@ -17,7 +17,12 @@ if (!defined('ABSPATH')) {
 
 function regenerate_image_to_webp_cwebp($image_path) {
     $output_path = $image_path . '.webp';
-    $command = escapeshellcmd("cwebp -q 80 {$image_path} -o {$output_path}");
+    
+    $default_quality = 15; // use object to rewrite this plugin can help to maintain readability and reusability later.
+    // Tried 15, small and non noticeable for background pattern images
+    $quality = get_option('webp_quality', $default_quality); // 设置默认值15
+
+    $command = escapeshellcmd("cwebp -q {$default_quality} {$image_path} -o {$output_path}");
     shell_exec($command);
     return $output_path;
 }
@@ -77,7 +82,7 @@ function handle_webp_regenerator_action() {
 
     $attachment_id = intval($_GET['attachment_id']);
     $image_path = get_attached_file($attachment_id);
-    $method = get_option('webp_regenerator_method', 'cwebp'); // Default method
+    $method = get_option('webp_regenerator_method', check_available_image_methods()); // Default method
 
     switch ($method) {
         case 'cwebp':
@@ -119,16 +124,7 @@ function jcg_media_toolbox_settings_page() {
 }
 add_action('admin_menu', 'jcg_media_toolbox_settings_page');
 
-// Render settings page
-function jcg_media_toolbox_settings_page_html() {
-    if (!current_user_can('manage_options')) {
-        return;
-    }
-
-    if (isset($_POST['webp_regenerator_method'])) {
-        update_option('webp_regenerator_method', $_POST['webp_regenerator_method']);
-    }
-
+function check_available_image_methods() {
     // 檢查 cwebp 是否可用
     $cwebp_available = false;
     $output = shell_exec('cwebp 2>&1');
@@ -141,9 +137,11 @@ function jcg_media_toolbox_settings_page_html() {
 
     // 檢查 Imagick 是否可用
     $imagick_available = class_exists('Imagick');
+    // $gd_available = $imagick_available = $cwebp_available = false;
 
     // 获取当前选择的方法，如果没有选择则自动选择第一个可用的方法
     $method = get_option('webp_regenerator_method', false);
+
     if (!$method || 
        ($method == 'cwebp' && !$cwebp_available) || 
        ($method == 'gd' && !$gd_available) || 
@@ -159,12 +157,51 @@ function jcg_media_toolbox_settings_page_html() {
         }
     }
 
+    return [
+        'method' => $method,
+        'cwebp_available' => $cwebp_available,
+        'gd_available' => $gd_available,
+        'imagick_available' => $imagick_available
+    ];
+}
+
+// Render settings page
+function jcg_media_toolbox_settings_page_html() {
+    if (!current_user_can('manage_options')) {
+        return;
+    }
+
+    $default_quality = 15;
+
+    if (isset($_POST['webp_regenerator_method'])) {
+        update_option('webp_regenerator_method', $_POST['webp_regenerator_method']);
+    }
+
+    if (isset($_POST['webp_quality'])) {
+        $quality = intval($_POST['webp_quality']);
+        if ( $quality < 0 || $quality > 100 ) {
+            $quality = $default_quality; // 设置默认值，如果输入的值不在0-100范围内
+        }
+        update_option('webp_quality', $quality);
+    } else {
+        $quality = get_option('webp_quality', $default_quality); // 设置默认值15
+    }
+
+    // 获取当前选择的方法，如果没有选择则自动选择第一个可用的方法
+    $method_settings = check_available_image_methods();
+    $method = $method_settings['method'];
+    $cwebp_available = $method_settings['cwebp_available'];
+    $gd_available = $method_settings['gd_available'];
+    $imagick_available = $method_settings['imagick_available'];
     ?>
     <div class="wrap">
         <h1>JingCodeGuy Media Toolbox Settings</h1>
         <form method="post" action="">
-            <label for="webp_regenerator_method">Conversion Method:</label>
-            <select name="webp_regenerator_method" id="webp_regenerator_method">
+            <table class="form-table" role="presentation">
+                <tbody>
+                    <tr>
+                        <th scope="row"><label for="webp_regenerator_method">Conversion Method:</label></th>
+                        <td><select name="webp_regenerator_method" id="webp_regenerator_method">
                 <?php if ($cwebp_available || $gd_available || $imagick_available) : ?>
                     <option value="cwebp" <?php selected($method, 'cwebp'); ?> <?php disabled(!$cwebp_available); ?>>cwebp</option>
                     <option value="gd" <?php selected($method, 'gd'); ?> <?php disabled(!$gd_available); ?>>GD</option>
@@ -172,8 +209,23 @@ function jcg_media_toolbox_settings_page_html() {
                 <?php else : ?>
                     <option value="">No available option</option>
                 <?php endif; ?>
-            </select>
+                        </select></td>
+                    </tr>
+                    <tr>
+                        <th scope="row"><label for="webp_quality">Quality (0-100):</label></th>
+                        <td><input type="number" name="webp_quality" id="webp_quality" value="<?php echo esc_attr($quality); ?>" min="0" max="100"> (default: 15 optimized for pattern images)</td>
+
+                        <!-- template -->
+                        <!-- <tr>
+                            <th scope="row"></th>
+                            <td></td>
+                        </tr> -->
+                    </tr>
+                </tbody>
+            </table>
+            <p class="submit">
             <input type="submit" value="Save Changes" class="button button-primary">
+            </p>
         </form>
     </div>
     <?php
