@@ -172,9 +172,19 @@ function jcg_media_toolbox_settings_page_html() {
     }
 
     $default_quality = 15;
+    $default_max_width = 3000;
+    $default_max_height = 3000;
 
     if (isset($_POST['webp_regenerator_method'])) {
         update_option('webp_regenerator_method', $_POST['webp_regenerator_method']);
+    }
+
+    if (isset($_POST['jcg_image_max_width'])) {
+        update_option('jcg_image_max_width', $_POST['jcg_image_max_width']);
+    }
+
+    if (isset($_POST['jcg_image_max_height'])) {
+        update_option('jcg_image_max_height', $_POST['jcg_image_max_height']);
     }
 
     if (isset($_POST['webp_quality'])) {
@@ -185,6 +195,26 @@ function jcg_media_toolbox_settings_page_html() {
         update_option('webp_quality', $quality);
     } else {
         $quality = get_option('webp_quality', $default_quality); // 设置默认值15
+    }
+
+    if (isset($_POST['jcg_image_max_width'])) {
+        $max_width = intval($_POST['jcg_image_max_width']);
+        if ( $max_width < 1280 || $max_width > 3000 ) {
+            $max_width = $default_max_width; // 设置默认值，如果输入的值不在0-100范围内
+        }
+        update_option('jcg_image_max_width', $max_width);
+    } else {
+        $max_width = get_option('jcg_image_max_width', $default_max_width); // 设置默认值15
+    }
+
+    if (isset($_POST['jcg_image_max_height'])) {
+        $max_height = intval($_POST['jcg_image_max_height']);
+        if ( $max_height < 1280 || $max_height > 3000 ) {
+            $max_height = $default_max_height; // 设置默认值，如果输入的值不在0-100范围内
+        }
+        update_option('jcg_image_max_height', $max_height);
+    } else {
+        $max_height = get_option('jcg_image_max_height', $default_max_height); // 设置默认值15
     }
 
     // 获取当前选择的方法，如果没有选择则自动选择第一个可用的方法
@@ -202,18 +232,23 @@ function jcg_media_toolbox_settings_page_html() {
                     <tr>
                         <th scope="row"><label for="webp_regenerator_method">Conversion Method:</label></th>
                         <td><select name="webp_regenerator_method" id="webp_regenerator_method">
-                <?php if ($cwebp_available || $gd_available || $imagick_available) : ?>
-                    <option value="cwebp" <?php selected($method, 'cwebp'); ?> <?php disabled(!$cwebp_available); ?>>cwebp</option>
-                    <option value="gd" <?php selected($method, 'gd'); ?> <?php disabled(!$gd_available); ?>>GD</option>
-                    <option value="imagick" <?php selected($method, 'imagick'); ?> <?php disabled(!$imagick_available); ?>>Imagick</option>
-                <?php else : ?>
-                    <option value="">No available option</option>
-                <?php endif; ?>
+                            <?php if ($cwebp_available || $gd_available || $imagick_available) : ?>
+                                <option value="cwebp" <?php selected($method, 'cwebp'); ?> <?php disabled(!$cwebp_available); ?>>cwebp</option>
+                                <option value="gd" <?php selected($method, 'gd'); ?> <?php disabled(!$gd_available); ?>>GD</option>
+                                <option value="imagick" <?php selected($method, 'imagick'); ?> <?php disabled(!$imagick_available); ?>>Imagick</option>
+                            <?php else : ?>
+                                <option value="">No available option</option>
+                            <?php endif; ?>
                         </select></td>
                     </tr>
                     <tr>
                         <th scope="row"><label for="webp_quality">Quality (0-100):</label></th>
                         <td><input type="number" name="webp_quality" id="webp_quality" value="<?php echo esc_attr($quality); ?>" min="0" max="100"> (default: 15 optimized for pattern images)</td>
+
+                        <tr>
+                            <th scope="row"><label for="max_image_dimension">Image Max Dimension:</label></th>
+                            <td>Width <input type="number" name="jcg_image_max_width" id="jcg_image_max_width" value="<?php echo esc_attr($max_width); ?>" min="1280" max="3000"> x Height <input type="number" name="jcg_image_max_height" id="jcg_image_max_height" value="<?php echo esc_attr($max_height); ?>" min="1280" max="3000"> (1280-3000)</td>
+                        </tr>
 
                         <!-- template -->
                         <!-- <tr>
@@ -224,7 +259,7 @@ function jcg_media_toolbox_settings_page_html() {
                 </tbody>
             </table>
             <p class="submit">
-            <input type="submit" value="Save Changes" class="button button-primary">
+                <input type="submit" value="Save Changes" class="button button-primary">
             </p>
         </form>
     </div>
@@ -245,9 +280,10 @@ function lud_check_image_dimensions($file) {
         $height = $image[1];
 
         // Set maximum dimensions
-        $max_width = 3000;
-        $max_height = 3000;
-
+        $default_max_width = $default_max_height = 3000;
+        $max_width = get_option('jcg_image_max_width', $default_max_width);
+        $max_height = get_option('jcg_image_max_height', $default_max_height);
+        
         // Check if the image exceeds the maximum dimensions
         if ($width > $max_width || $height > $max_height) {
             $file['error'] = "Image dimensions must not exceed {$max_width} x {$max_height} pixels.";
