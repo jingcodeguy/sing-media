@@ -4,7 +4,7 @@
 * Plugin URI:  https://jingcodeguy.com
 * Description: Add media tools including Regenerate specific images to WebP format using cwebp, GD, or Imagick, media upload dimension restriction(no ui yet)
 * Text Domain: sing
-* Version:     1.0
+* Version:     1.1
 * Author:      西門 正 Code Guy
 * Author URI:  https://jingcodeguy.com
 * License:     GPLv2 or later (license.txt)
