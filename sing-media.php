@@ -318,4 +318,6 @@ function lud_rest_handle_upload($response, $handler, $request) {
 // Hook into the REST API request
 add_filter('rest_pre_dispatch', 'lud_rest_handle_upload', 10, 3);
 
+// to be done in class later for different features
+require_once 'sa-compare-webp-size.php';
 ?>
