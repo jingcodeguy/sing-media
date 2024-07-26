@@ -22,7 +22,7 @@ function regenerate_image_to_webp_cwebp($image_path) {
     // Tried 15, small and non noticeable for background pattern images
     $quality = get_option('webp_quality', $default_quality); // 设置默认值15
 
-    $command = escapeshellcmd("cwebp -q {$default_quality} {$image_path} -o {$output_path}");
+    $command = escapeshellcmd("cwebp -q {$quality} {$image_path} -o {$output_path}");
     shell_exec($command);
     return $output_path;
 }
