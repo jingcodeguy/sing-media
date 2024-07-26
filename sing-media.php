@@ -114,7 +114,7 @@ add_action('admin_init', 'handle_webp_regenerator_action');
 
 // Add settings page
 function jcg_media_toolbox_settings_page() {
-    add_options_page(
+    add_media_page(
         'JingCodeGuy Media Toolbox Settings',
         'JingCodeGuy Media Toolbox',
         'manage_options',
