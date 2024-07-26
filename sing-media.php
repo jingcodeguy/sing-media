@@ -79,11 +79,6 @@ function handle_webp_regenerator_action() {
     $image_path = get_attached_file($attachment_id);
     $method = get_option('webp_regenerator_method', 'cwebp'); // Default method
 
-    // Logging for debugging
-    $log_file = plugin_dir_path(__FILE__) . 'debug.log';
-    file_put_contents($log_file, "Attachment ID: $attachment_id\n", FILE_APPEND);
-    file_put_contents($log_file, "Image Path: $image_path\n", FILE_APPEND);
-
     switch ($method) {
         case 'cwebp':
             $webp_path = regenerate_image_to_webp_cwebp($image_path);
@@ -100,9 +95,6 @@ function handle_webp_regenerator_action() {
 
     // Generate WebP for thumbnails
     regenerate_thumbnails_to_webp($attachment_id, $method);
-
-    // More logging for debugging
-    file_put_contents($log_file, "WebP Path: $webp_path\n", FILE_APPEND);
 
     // Add an admin notice
     add_action('admin_notices', function() use ($webp_path) {
