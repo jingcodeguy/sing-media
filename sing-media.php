@@ -129,7 +129,35 @@ function jcg_media_toolbox_settings_page_html() {
         update_option('webp_regenerator_method', $_POST['webp_regenerator_method']);
     }
 
-    $method = get_option('webp_regenerator_method', 'cwebp');
+    // 檢查 cwebp 是否可用
+    $cwebp_available = false;
+    $output = shell_exec('cwebp 2>&1');
+    if (strpos($output, 'Usage:') !== false) {
+        $cwebp_available = true;
+    }
+
+    // 檢查 GD 擴展是否可用
+    $gd_available = extension_loaded('gd');
+
+    // 檢查 Imagick 是否可用
+    $imagick_available = class_exists('Imagick');
+
+    // 获取当前选择的方法，如果没有选择则自动选择第一个可用的方法
+    $method = get_option('webp_regenerator_method', false);
+    if (!$method || 
+       ($method == 'cwebp' && !$cwebp_available) || 
+       ($method == 'gd' && !$gd_available) || 
+       ($method == 'imagick' && !$imagick_available)) {
+        if ($cwebp_available) {
+            $method = 'cwebp';
+        } elseif ($gd_available) {
+            $method = 'gd';
+        } elseif ($imagick_available) {
+            $method = 'imagick';
+        } else {
+            $method = ''; // 没有可用的方法
+        }
+    }
 
     ?>
     <div class="wrap">
@@ -137,9 +165,13 @@ function jcg_media_toolbox_settings_page_html() {
         <form method="post" action="">
             <label for="webp_regenerator_method">Conversion Method:</label>
             <select name="webp_regenerator_method" id="webp_regenerator_method">
-                <option value="cwebp" <?php selected($method, 'cwebp'); ?>>cwebp</option>
-                <option value="gd" <?php selected($method, 'gd'); ?>>GD</option>
-                <option value="imagick" <?php selected($method, 'imagick'); ?>>Imagick</option>
+                <?php if ($cwebp_available || $gd_available || $imagick_available) : ?>
+                    <option value="cwebp" <?php selected($method, 'cwebp'); ?> <?php disabled(!$cwebp_available); ?>>cwebp</option>
+                    <option value="gd" <?php selected($method, 'gd'); ?> <?php disabled(!$gd_available); ?>>GD</option>
+                    <option value="imagick" <?php selected($method, 'imagick'); ?> <?php disabled(!$imagick_available); ?>>Imagick</option>
+                <?php else : ?>
+                    <option value="">No available option</option>
+                <?php endif; ?>
             </select>
             <input type="submit" value="Save Changes" class="button button-primary">
         </form>
