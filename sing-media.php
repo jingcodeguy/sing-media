@@ -108,19 +108,19 @@ function handle_webp_regenerator_action() {
 add_action('admin_init', 'handle_webp_regenerator_action');
 
 // Add settings page
-function webp_regenerator_settings_page() {
+function jcg_media_toolbox_settings_page() {
     add_options_page(
-        'WebP Regenerator Settings',
-        'WebP Regenerator',
+        'JingCodeGuy Media Toolbox Settings',
+        'JingCodeGuy Media Toolbox',
         'manage_options',
-        'webp-regenerator-settings',
-        'webp_regenerator_settings_page_html'
+        'jingcodeguy-media-toolbox-settings',
+        'jcg_media_toolbox_settings_page_html'
     );
 }
-add_action('admin_menu', 'webp_regenerator_settings_page');
+add_action('admin_menu', 'jcg_media_toolbox_settings_page');
 
 // Render settings page
-function webp_regenerator_settings_page_html() {
+function jcg_media_toolbox_settings_page_html() {
     if (!current_user_can('manage_options')) {
         return;
     }
@@ -133,7 +133,7 @@ function webp_regenerator_settings_page_html() {
 
     ?>
     <div class="wrap">
-        <h1>WebP Regenerator Settings</h1>
+        <h1>JingCodeGuy Media Toolbox Settings</h1>
         <form method="post" action="">
             <label for="webp_regenerator_method">Conversion Method:</label>
             <select name="webp_regenerator_method" id="webp_regenerator_method">
